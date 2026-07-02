@@ -220,29 +220,25 @@ calc_comb:
     cmpq %r13, %r12
     jl .cc_erro_comb
 
+    movq %r12, %rdi
+    call fatorial
+    movq %rax, %r14
+
+    movq %r13, %rdi
+    call fatorial
+    movq %rax, %r15
+
     movq %r12, %rax
     subq %r13, %rax
-    cmpq %rax, %r13
-    jle .cc_k_ok
-    movq %rax, %r13             # k = min(r, n-r)
-.cc_k_ok:
-    movq $1, %r14               # resultado
-    movq $1, %r15               # i
-    movq %r12, %rbx
-    subq %r13, %rbx             # n-k
-.cc_loop:
-    cmpq %r13, %r15
-    jg .cc_loop_fim
-    movq %rbx, %rax
-    addq %r15, %rax             # n-k+i
-    imulq %r14, %rax
+    movq %rax, %rdi
+    call fatorial
+    movq %rax, %rbx
+
+    imulq %r15, %rbx
+    movq %r14, %rax
     cqto
-    idivq %r15
-    movq %rax, %r14
-    incq %r15
-    jmp .cc_loop
-.cc_loop_fim:
-    movq %r14, int_tmp(%rip)
+    idivq %rbx
+    movq %rax, int_tmp(%rip)
     fildll int_tmp(%rip)
     jmp .cc_fim
 .cc_erro_neg:
