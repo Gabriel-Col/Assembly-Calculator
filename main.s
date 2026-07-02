@@ -1,85 +1,83 @@
 # =====================================================================
 # Calculadora em assembly x86-64 (AT&T / GAS) SEM uso de libc.
-# Nao utiliza printf, scanf, pow, log da libc.
 # Entrada/saida feita via syscalls diretas (read=0, write=1, exit=60).
-# Operacoes matematicas (pow, log, sqrt) implementadas com instrucoes
-# nativas da FPU x87 (FYL2X, F2XM1, FSCALE, FSQRT, etc).
 # =====================================================================
+
 
     .section .data
 
-ten_const:      .double 10.0
-tenth_const:    .double 0.1
-one_const:      .double 1.0
-zero_const:     .double 0.0
+        ten_const:      .double 10.0
+        tenth_const:    .double 0.1
+        one_const:      .double 1.0
+        zero_const:     .double 0.0
 
-msg_op1:        .string "Digite o primeiro operando: "
-msg_op2:        .string "Digite o segundo operando: "
-msg_operador:   .string "Digite o operador (+,-,*,/,^,c,a,!,i,r,l,p): "
-msg_resultado:  .string "Resultado: "
-msg_continuar:  .string "Deseja continuar? (s/n): "
-msg_nl:         .string "\n"
-msg_ok:         .string "OK\n"
+        msg_op1:        .string "Digite o primeiro operando: "
+        msg_op2:        .string "Digite o segundo operando: "
+        msg_operador:   .string "Digite o operador (+,-,*,/,^,c,a,!,i,r,l,p): "
+        msg_resultado:  .string "Resultado: "
+        msg_continuar:  .string "Deseja continuar? (s/n): "
+        msg_nl:         .string "\n"
+        msg_ok:         .string "OK\n"
 
-erro_div:       .string "Erro: divisao por zero nao e possivel.\n"
-erro_neg:       .string "Erro: operacao nao suportada para operandos negativos ou nao inteiros.\n"
-erro_comb:      .string "Erro: n deve ser maior ou igual a r.\n"
-erro_sqrt:      .string "Erro: raiz quadrada de numero negativo nao e possivel.\n"
-erro_inv:       .string "Erro: inverso de zero nao e possivel.\n"
-erro_log:       .string "Erro: logaritmando deve ser > 0 e base positiva diferente de 1.\n"
-erro_pow:       .string "Erro: base deve ser positiva para expoente nao inteiro.\n"
-erro_op:        .string "Erro: operador invalido.\n"
+        erro_div:       .string "Erro: divisao por zero nao e possivel.\n"
+        erro_neg:       .string "Erro: operacao nao suportada para operandos negativos ou nao inteiros.\n"
+        erro_comb:      .string "Erro: n deve ser maior ou igual a r.\n"
+        erro_sqrt:      .string "Erro: raiz quadrada de numero negativo nao e possivel.\n"
+        erro_inv:       .string "Erro: inverso de zero nao e possivel.\n"
+        erro_log:       .string "Erro: logaritmando deve ser > 0 e base positiva diferente de 1.\n"
+        erro_pow:       .string "Erro: base deve ser positiva para expoente nao inteiro.\n"
+        erro_op:        .string "Erro: operador invalido.\n"
 
     .section .bss
-op1:        .skip 8
-op2:        .skip 8
-y_mem:      .skip 8
-i_mem:      .skip 8
-int_tmp:    .skip 8
-mem_acc:    .skip 8
-mem_place:  .skip 8
-input_buf:  .skip 128
-output_buf: .skip 64
-operador:   .skip 2
-erro_flag:  .skip 8
-io_buffer:  .skip 256
-io_buf_pos: .skip 8
-io_buf_len: .skip 8
-var_values: .skip 208
-var_set:    .skip 26
-func_set:   .skip 26
-func_param: .skip 26
-func_body:  .skip 1664
-eval_pos:   .skip 8
-func_arg:   .skip 8
-active_param: .skip 1
+        op1:        .skip 8
+        op2:        .skip 8
+        y_mem:      .skip 8
+        i_mem:      .skip 8
+        int_tmp:    .skip 8
+        mem_acc:    .skip 8
+        mem_place:  .skip 8
+        input_buf:  .skip 128
+        output_buf: .skip 64
+        operador:   .skip 2
+        erro_flag:  .skip 8
+        io_buffer:  .skip 256
+        io_buf_pos: .skip 8
+        io_buf_len: .skip 8
+        var_values: .skip 208
+        var_set:    .skip 26
+        func_set:   .skip 26
+        func_param: .skip 26
+        func_body:  .skip 1664
+        eval_pos:   .skip 8 
+        func_arg:   .skip 8
+        active_param: .skip 1
 
-    .section .text
-    .global _start
-    .global op1, op2, y_mem, i_mem, int_tmp, erro_flag
-    .global zero_const, one_const
-    .global compare_doubles, is_integer_check
-    .extern calc_soma, calc_sub, calc_mul, calc_div, calc_pow, calc_comb
-    .extern calc_arr, calc_fat, calc_inv, calc_sqrt, calc_log, calc_primo
+            .section .text
+            .global _start
+            .global op1, op2, y_mem, i_mem, int_tmp, erro_flag
+            .global zero_const, one_const
+            .global compare_doubles, is_integer_check
+            .extern calc_soma, calc_sub, calc_mul, calc_div, calc_pow, calc_comb
+            .extern calc_arr, calc_fat, calc_inv, calc_sqrt, calc_log, calc_primo
 
 # =====================================================================
 # print_cstr: rdi = endereco de string terminada em NUL (0)
 # Escreve a string na saida padrao (stdout) via syscall write.
 # =====================================================================
-print_cstr:
+print_cstr:     #Imprimir uma string terminada em '\0' ex:print_cstr("Resultado: ");    
     push %rbp
     movq %rsp, %rbp
     movq %rdi, %r12
     xorq %r13, %r13
 .pc_strlen:
-    cmpb $0, (%r12, %r13, 1)
+    cmpb $0, (%r12, %r13, 1)    # se encontrou o '\0' imprime
     je .pc_write
     incq %r13
     jmp .pc_strlen
 .pc_write:
-    movq %r13, %rdx
-    movq %r12, %rsi
-    movq $1, %rax
+    movq %r13, %rdx         #%r13 tem o tam da string
+    movq %r12, %rsi         #endereço
+    movq $1, %rax           #syscall write
     movq $1, %rdi
     syscall
     movq %rbp, %rsp
@@ -89,7 +87,8 @@ print_cstr:
 # =====================================================================
 # print_buf: rdi = endereco do buffer, rdx = quantidade de bytes
 # =====================================================================
-print_buf:
+# write(1,buffer,tamanho);
+print_buf:      
     push %rbp
     movq %rsp, %rbp
     movq %rdi, %rsi
@@ -100,24 +99,18 @@ print_buf:
     pop %rbp
     ret
 
-# =====================================================================
-# read_line: rdi = buffer destino, rdx = tamanho maximo do destino
-# Le uma linha via um buffer interno (io_buffer), que pode conter
-# varias linhas de uma so vez quando a entrada vem de um pipe (a
-# chamada read() nao garante uma linha por vez quando nao eh um
-# terminal). Retorna em rax o numero de caracteres da linha lida
-# (sem contar o '\n'); o destino fica terminado em NUL (0).
-# =====================================================================
-read_line:
+
+#Le a linha inteira digitada no terminal
+read_line:          
     push %rbp
     movq %rsp, %rbp
     movq %rdi, %r12
     movq %rdx, %r13
     xorq %r14, %r14
 
-.rl_char_loop:
+.rl_char_loop:      #copia caracter por caracter
     movq io_buf_pos(%rip), %rax
-    cmpq io_buf_len(%rip), %rax
+    cmpq io_buf_len(%rip), %rax     #verifica se acabou o buffer interno
     jl .rl_tem_dado
 
     movq $0, %rax
@@ -157,12 +150,12 @@ read_line:
     pop %rbp
     ret
 
-# =====================================================================
-# parse_double: rdi = buffer (string terminada em NUL)
+
 # Converte a string para double, deixando o resultado em st(0).
 # Suporta sinal '-' e parte fracionaria apos '.'.
-# =====================================================================
-parse_double:
+# '123.45' -> 123.45(double)
+
+parse_double:      
     push %rbp
     movq %rsp, %rbp
     push %rbx
@@ -172,7 +165,7 @@ parse_double:
     xorq %r12, %r12
 
     movb (%rbx), %al
-    cmpb $'-', %al
+    cmpb $'-', %al      #verifica se é negativo
     jne .pd_sem_sinal
     movq $1, %r12
     incq %rbx
@@ -243,11 +236,9 @@ parse_double:
     pop %rbp
     ret
 
-# =====================================================================
 # int_to_str: rdi = valor inteiro (int64, assumido nao-negativo aqui)
 #             rsi = buffer destino
 # Retorna em rax a quantidade de caracteres escritos.
-# =====================================================================
 int_to_str:
     push %rbp
     movq %rsp, %rbp
@@ -302,11 +293,10 @@ int_to_str:
     pop %rbp
     ret
 
-# =====================================================================
+
 # format_double: valor em st(0) (consumido), rdi = buffer destino
 # Converte o double para string decimal (6 casas, sem zeros finais).
 # Retorna em rax a quantidade de caracteres escritos.
-# =====================================================================
 format_double:
     push %rbp
     movq %rsp, %rbp
@@ -319,25 +309,25 @@ format_double:
     xorq %r13, %r13
 
     fldz
-    fcomi %st(1), %st(0)
-    fstp %st(0)
-    jbe .fd_positivo
-    movb $'-', (%r12, %r13, 1)
+    fcomi %st(1), %st(0)        #compara
+    fstp %st(0)                 #pop
+    jbe .fd_positivo            #menor ou igual
+    movb $'-', (%r12, %r13, 1)  #*(r12 + r13) = '-';
     incq %r13
-    fchs
+    fchs            # st(0) = -st(0)
 .fd_positivo:
-    fld %st(0)
-    fisttpll int_tmp(%rip)
+    fld %st(0)                  #st(1) = st(0)
+    fisttpll int_tmp(%rip)      #transformar ponto flutuante em inteiro e joga o valor em int_tmp = (long long)ST(0);
     movq int_tmp(%rip), %r14
 
     movq %r14, %rdi
-    leaq (%r12, %r13, 1), %rsi
+    leaq (%r12, %r13, 1), %rsi  # rsi = endereço(r12 + r13)
     call int_to_str
     addq %rax, %r13
 
-    fildll int_tmp(%rip)
-    fsubr %st(0), %st(1)
-    fstp %st(0)
+    fildll int_tmp(%rip)        #ST0 = (long double)int_tmp;
+    fsubr %st(0), %st(1)        #ST(1) = ST(0) - ST(1)
+    fstp %st(0)                 #pop
 
     movb $'.', (%r12, %r13, 1)
     incq %r13
@@ -385,10 +375,9 @@ format_double:
     pop %rbp
     ret
 
-# =====================================================================
+
 # compare_doubles: rdi = endereco de A, rsi = endereco de B
 # Retorna em rax: -1 se A<B, 0 se A==B, 1 se A>B
-# =====================================================================
 compare_doubles:
     push %rbp
     movq %rsp, %rbp
@@ -411,11 +400,10 @@ compare_doubles:
     pop %rbp
     ret
 
-# =====================================================================
+
 # is_integer_check: valor em st(0) (preservado ao final)
 # Retorna em rax: 1 se o valor for inteiro, 0 caso contrario.
 # Deixa em int_tmp(memoria) o valor truncado (int64), para reuso.
-# =====================================================================
 is_integer_check:
     push %rbp
     movq %rsp, %rbp
@@ -432,9 +420,8 @@ is_integer_check:
     pop %rbp
     ret
 
-# =====================================================================
+
 # skip_spaces_eval: avanca eval_pos enquanto houver espacos.
-# =====================================================================
 skip_spaces_eval:
     push %rbp
     movq %rsp, %rbp
@@ -451,9 +438,8 @@ skip_spaces_eval:
     pop %rbp
     ret
 
-# =====================================================================
+
 # parse_value_eval: le numero, variavel ou chamada f(x). Resultado em st(0).
-# =====================================================================
 parse_value_eval:
     push %rbp
     movq %rsp, %rbp
