@@ -29,28 +29,28 @@
         erro_op:        .string "Erro: operador invalido.\n"
 
     .section .bss
-        op1:        .skip 8
-        op2:        .skip 8
-        y_mem:      .skip 8
-        i_mem:      .skip 8
-        int_tmp:    .skip 8
-        mem_acc:    .skip 8
-        mem_place:  .skip 8
-        input_buf:  .skip 128
-        output_buf: .skip 64
-        operador:   .skip 2
-        erro_flag:  .skip 8
-        io_buffer:  .skip 256
-        io_buf_pos: .skip 8
-        io_buf_len: .skip 8
-        var_values: .skip 208
-        var_set:    .skip 26
-        func_set:   .skip 26
-        func_param: .skip 26
-        func_body:  .skip 1664
-        eval_pos:   .skip 8 
-        func_arg:   .skip 8
-        active_param: .skip 1
+        op1:            .skip 8     # Primeiro operando (double)
+        op2:            .skip 8     # Segundo operando (double)
+        y_mem:          .skip 8     # Variável auxiliar da potência
+        i_mem:          .skip 8     # Contador auxiliar da potência
+        int_tmp:        .skip 8     # Inteiro temporário para conversões
+        mem_acc:        .skip 8     # Acumulador do parse de números
+        mem_place:      .skip 8     # Peso decimal (0.1, 0.01, ...)
+        input_buf:      .skip 128   # Buffer de entrada do usuário
+        output_buf:     .skip 64    # Buffer para saída formatada
+        operador:       .skip 2     # Operador da operação atual
+        erro_flag:      .skip 8     # Código de erro da operação
+        io_buffer:      .skip 256   # Buffer interno de leitura
+        io_buf_pos:     .skip 8     # Posição atual no buffer de leitura
+        io_buf_len:     .skip 8     # Quantidade de bytes válidos no buffer
+        var_values:     .skip 208   # Valores das variáveis (a-z)
+        var_set:        .skip 26    # Indica variáveis inicializadas
+        func_set:       .skip 26    # Indica funções definidas
+        func_param:     .skip 26    # Parâmetro de cada função
+        func_body:      .skip 1664  # Corpo das funções definidas
+        eval_pos:       .skip 8     # Posição atual na expressão
+        func_arg:       .skip 8     # Argumento da função em execução
+        active_param:   .skip 1     # Parâmetro atualmente ativo
 
             .section .text
             .global _start
